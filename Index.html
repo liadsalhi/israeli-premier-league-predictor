@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניחושי כדורגל</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: linear-gradient(180deg, #050d1a 0%, #0a1628 40%, #0d2040 70%, #050d1a 100%); min-height: 100vh; color: #333; padding: 1rem; }
+    .app { max-width: 750px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 1.5rem; background: white; border-radius: 12px; padding: 1rem; }
+    h1 { font-size: 22px; font-weight: 500; }
+    .subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+    .round-badge { display: inline-block; font-size: 13px; background: #e6f1fb; color: #185fa5; padding: 4px 12px; border-radius: 8px; margin-top: 8px; }
+    .countdown { background: white; border-radius: 12px; padding: 12px 16px; text-align: center; margin-bottom: 1.5rem; }
+    .countdown-label { font-size: 13px; color: #888; margin-bottom: 6px; }
+    .countdown-time { font-size: 24px; font-weight: 500; letter-spacing: 2px; }
+    .countdown-time.locked { color: #e24b4a; }
+    .section-title { font-size: 16px; font-weight: 500; margin-bottom: 10px; color: white; }
+    .card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f8f8; color: #888; font-weight: 500; padding: 10px 8px; border-bottom: 1px solid #eee; text-align: center; }
+    th.match-col { text-align: right; }
+    td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: center; color: #333; }
+    td.match-name { text-align: right; font-size: 12px; color: #666; }
+    tr:last-child td { border-bottom: none; }
+    .result-actual { font-weight: 500; color: #3b6d11; }
+    .result-pending { color: #bbb; font-size: 12px; }
+    .loading { text-align: center; padding: 2rem; color: #888; }
+    .login-screen { background: white; border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 1.5rem; }
+    .login-screen h2 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; }
+    .player-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 1rem; }
+    .player-btn { padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 15px; transition: all 0.2s; }
+    .player-btn:hover { background: #e6f1fb; border-color: #185fa5; color: #185fa5; }
+    .guess-input { width: 60px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 13px; }
+    .guess-input:focus { outline: none; border-color: #185fa5; }
+    .save-btn { display: block; width: 100%; padding: 12px; background: #185fa5; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin-top: 1rem; }
+    .save-btn:hover { background: #0c447c; }
+    .reset-btn { display: block; width: 100%; padding: 12px; background: #e24b4a; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin-top: 8px; }
+    .reset-btn:hover { background: #a32d2d; }
+    .save-msg { text-align: center; padding: 8px; color: #3b6d11; font-size: 14px; display: none; }
+    .logged-in-as { font-size: 13px; color: #888; margin-top: 4px; }
+    .stats-row { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+    .stats-card { background: white; border-radius: 12px; overflow: hidden; flex: 1; min-width: 0; }
+    .stats-card-title { font-size: 12px; font-weight: 500; color: #185fa5; padding: 8px; text-align: center; background: #f0f6ff; border-bottom: 1px solid #eee; }
+    .stats-card table { font-size: 11px; }
+    .stats-card th { padding: 6px 4px; font-size: 10px; }
+    .stats-card td { padding: 6px 4px; font-size: 11px; }
+    .password-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-size: 18px; letter-spacing: 8px; margin-top: 1rem; }
+    .password-input:focus { outline: none; border-color: #185fa5; }
+    .password-btn { display: block; width: 100%; padding: 12px; background: #185fa5; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin-top: 10px; }
+    .password-btn:hover { background: #0c447c; }
+    .password-error { color: #e24b4a; font-size: 13px; margin-top: 8px; display: none; }
+    .back-btn { background: none; border: none; color: #888; font-size: 13px; cursor: pointer; margin-top: 8px; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div style="display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap;">
+        <img src="https://r2.thesportsdb.com/images/media/league/logo/gu7evi1664190047.png" style="height:70px; border-radius:8px;">
+        <div>
+          <h1>ליגת ה☀️ לניירות ערך</h1>
+          <p class="subtitle">ליגת העל הישראלית</p>
+          <div class="round-badge" id="round-badge">טוען...</div>
+        </div>
+      </div>
+      <div id="user-info" style="display:none; margin-top:8px;">
+        <span class="logged-in-as">מחובר כ: <strong id="current-user-name"></strong></span>
+      </div>
+    </div>
+
+    <!-- מסך בחירת שחקן -->
+    <div id="login-screen" class="login-screen">
+      <h2>מי אתה?</h2>
+      <p style="font-size:13px; color:#888;">בחר את שמך כדי להזין ניחושים</p>
+      <div class="player-buttons" id="player-buttons">טוען...</div>
+    </div>
+
+    <!-- מסך סיסמה -->
+    <div id="password-screen" class="login-screen" style="display:none;">
+      <h2 id="password-title">שלום!</h2>
+      <p id="password-subtitle" style="font-size:13px; color:#888;">הכנס סיסמה בת 6 ספרות</p>
+      <input type="password" class="password-input" id="password-input" maxlength="6" inputmode="numeric" placeholder="● ● ● ● ● ●">
+      <button class="password-btn" onclick="submitPassword()">כניסה</button>
+      <p class="password-error" id="password-error">סיסמה שגויה, נסה שוב</p>
+      <button class="back-btn" onclick="goBack()">חזרה לבחירת שם</button>
+    </div>
+
+    <div class="countdown">
+      <div class="countdown-label">זמן שנותר להגשת ניחושים</div>
+      <div class="countdown-time" id="countdown">טוען...</div>
+    </div>
+
+    <div class="section-title">טבלת משחקים וניחושים</div>
+    <div class="card">
+      <div id="matches-table" class="loading">טוען...</div>
+    </div>
+    <div class="save-msg" id="save-msg">הניחושים נשמרו בהצלחה!</div>
+    <button class="save-btn" id="save-btn" style="display:none" onclick="saveGuesses()">שמור ניחושים</button>
+    <button class="reset-btn" id="reset-btn" style="display:none" onclick="resetGuesses()">איפוס בחירה</button>
+
+    <div class="section-title" style="margin-top:1.5rem">טבלת דירוג</div>
+    <div class="card">
+      <div id="leaderboard-table" class="loading">טוען...</div>
+    </div>
+
+    <div class="section-title" style="margin-top:1.5rem">טבלת ליגה</div>
+    <div class="card">
+      <div id="league-table" class="loading">טוען...</div>
+    </div>
+
+    <div class="section-title" style="margin-top:1.5rem">סטטיסטיקות שחקנים</div>
+    <div class="stats-row">
+      <div class="stats-card">
+        <div class="stats-card-title">⚽ מלך השערים</div>
+        <div id="top-scorers-table" class="loading">טוען...</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-title">👨‍🍳 מלך הבישולים</div>
+        <div id="top-assists-table" class="loading">טוען...</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-title">🏆 שערים ובישולים</div>
+        <div id="top-goals-assists-table" class="loading">טוען...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var appData = null;
+    var currentPlayerIndex = -1;
+    var pendingPlayerIndex = -1;
+    var pendingPlayerName = '';
+    var lockTime = null;
+    var isLocked = false;
+
+    google.script.run
+      .withSuccessHandler(function(data) {
+        appData = data;
+        document.getElementById('round-badge').textContent = 'מחזור ' + data.round;
+        buildLeaderboard(data);
+        buildPlayerButtons(data.players);
+        buildMatchesTable(data);
+        buildLeagueTable(data);
+        buildTopScorers(data);
+        buildTopAssists(data);
+        buildTopGoalsAssists(data);
+
+        google.script.run
+          .withSuccessHandler(function(firstMatchTime) {
+            if (firstMatchTime) {
+              var matchTime = new Date(firstMatchTime);
+              lockTime = new Date(matchTime.getTime() - 3 * 60 * 60 * 1000);
+              var now = new Date();
+              if (now >= lockTime) {
+                isLocked = true;
+                document.getElementById('save-btn').style.display = 'none';
+                document.getElementById('reset-btn').style.display = 'none';
+                buildMatchesTable(appData);
+              }
+              updateCountdown();
+              setInterval(updateCountdown, 1000);
+            } else {
+              document.getElementById('countdown').textContent = 'אין מידע';
+            }
+          })
+          .getFirstMatchTime();
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('matches-table').textContent = 'שגיאה: ' + err.message;
+      })
+      .getAppData();
+
+    function buildPlayerButtons(players) {
+      var html = '';
+      for (var i = 0; i < players.length; i++) {
+        html += '<button class="player-btn" onclick="choosePlayer(' + i + ',\'' + players[i] + '\')">' + players[i] + '</button>';
+      }
+      document.getElementById('player-buttons').innerHTML = html;
+    }
+
+    // לחיצה על שם — בודק אם יש סיסמה
+    function choosePlayer(index, name) {
+      pendingPlayerIndex = index;
+      pendingPlayerName = name;
+      var hasPassword = appData.passwords && appData.passwords[index] && appData.passwords[index].toString().length === 6;
+
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('password-screen').style.display = 'block';
+      document.getElementById('password-input').value = '';
+      document.getElementById('password-error').style.display = 'none';
+
+      if (hasPassword) {
+        document.getElementById('password-title').textContent = 'שלום ' + name + '!';
+        document.getElementById('password-subtitle').textContent = 'הכנס את הסיסמה שלך';
+        document.querySelector('.password-btn').textContent = 'היכנס';
+      } else {
+        document.getElementById('password-title').textContent = 'היי ' + name + '!';
+        document.getElementById('password-subtitle').textContent = 'בחר סיסמה בת 6 ספרות לפרופיל שלך';
+        document.querySelector('.password-btn').textContent = 'בחר סיסמה';
+      }
+    }
+
+    // אימות או שמירת סיסמה
+    function submitPassword() {
+      var input = document.getElementById('password-input').value.trim();
+      document.getElementById('password-error').style.display = 'none';
+      
+      if (input.length !== 6 || isNaN(input)) {
+        document.getElementById('password-error').textContent = 'הסיסמה חייבת להיות 6 ספרות בלבד';
+        document.getElementById('password-error').style.display = 'block';
+        document.getElementById('password-input').value = '';
+        document.getElementById('password-input').focus();
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result === 'ok' || result === 'new') {
+            enterApp(pendingPlayerIndex, pendingPlayerName);
+          } else {
+            document.getElementById('password-error').textContent = 'סיסמה שגויה, נסה שוב';
+            document.getElementById('password-error').style.display = 'block';
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-input').focus();
+          }
+        })
+        .verifyOrSetPassword(pendingPlayerIndex, input);
+    }
+
+    // כניסה לאפליקציה אחרי אימות
+    function enterApp(index, name) {
+      currentPlayerIndex = index;
+      document.getElementById('password-screen').style.display = 'none';
+      document.getElementById('user-info').style.display = 'block';
+      document.getElementById('current-user-name').textContent = name;
+      if (!isLocked) {
+        document.getElementById('save-btn').style.display = 'block';
+        document.getElementById('reset-btn').style.display = 'block';
+      }
+      buildMatchesTable(appData);
+    }
+
+    // חזרה למסך בחירת שם
+    function goBack() {
+      document.getElementById('password-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'block';
+      document.getElementById('password-input').value = '';
+      document.getElementById('password-error').style.display = 'none';
+    }
+
+    function updateCountdown() {
+      var now = new Date();
+      var diff = lockTime - now;
+      var el = document.getElementById('countdown');
+      if (diff <= 0) {
+        el.textContent = 'ניחושים ננעלו';
+        el.classList.add('locked');
+        isLocked = true;
+        document.getElementById('save-btn').style.display = 'none';
+        document.getElementById('reset-btn').style.display = 'none';
+        buildMatchesTable(appData);
+        return;
+      }
+      var h = Math.floor(diff / 3600000);
+      var m = Math.floor((diff % 3600000) / 60000);
+      var s = Math.floor((diff % 60000) / 1000);
+      el.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function buildMatchesTable(data) {
+      var html = '<table><thead><tr><th class="match-col">משחק</th><th>תוצאת אמת</th>';
+      for (var p = 0; p < data.players.length; p++) {
+        html += '<th>' + data.players[p] + '</th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      for (var i = 0; i < data.matches.length; i++) {
+        html += '<tr><td class="match-name">';
+        var match = data.matches[i];
+        var parts = match.split(' vs ');
+        if (parts.length === 2) {
+          var home = parts[0].trim();
+          var away = parts[1].trim();
+          var homeLogo = data.logos && data.logos[home] ? '<img src="' + data.logos[home] + '" style="height:20px; vertical-align:middle; margin-left:4px;">' : '';
+          var awayLogo = data.logos && data.logos[away] ? '<img src="' + data.logos[away] + '" style="height:20px; vertical-align:middle; margin-left:4px;">' : '';
+          html += home + ' ' + homeLogo + ' vs ' + awayLogo + ' ' + away;
+        } else {
+          html += match;
+        }
+        html += '</td>';
+        var result = data.results[i] ? data.results[i] : '';
+        html += result ? '<td class="result-actual">' + result + '</td>' : '<td class="result-pending">טרם שוחק</td>';
+
+        for (var j = 0; j < data.players.length; j++) {
+          var guess = data.guesses[i][j] ? data.guesses[i][j] : '';
+          if (j === currentPlayerIndex && !isLocked) {
+            html += '<td><input class="guess-input" id="guess-' + i + '" value="' + guess + '" placeholder="0-0"></td>';
+          } else if (isLocked) {
+            html += '<td>' + (guess || '-') + '</td>';
+          } else {
+            html += '<td>' + (j === currentPlayerIndex ? (guess || '-') : '🔒') + '</td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById('matches-table').innerHTML = html;
+    }
+
+    function saveGuesses() {
+      var guesses = [];
+      for (var i = 0; i < appData.matches.length; i++) {
+        var input = document.getElementById('guess-' + i);
+        guesses.push(input ? input.value : '');
+      }
+      document.getElementById('save-btn').textContent = 'שומר...';
+      google.script.run
+        .withSuccessHandler(function() {
+          document.getElementById('save-msg').textContent = 'הניחושים נשמרו בהצלחה!';
+          document.getElementById('save-msg').style.display = 'block';
+          document.getElementById('save-btn').textContent = 'שמור ניחושים';
+          setTimeout(function() { document.getElementById('save-msg').style.display = 'none'; }, 3000);
+        })
+        .saveGuesses(currentPlayerIndex, guesses);
+    }
+
+    function resetGuesses() {
+      if (!confirm('האם אתה בטוח שברצונך לאפס את כל הניחושים?')) return;
+      var emptyGuesses = [];
+      for (var i = 0; i < appData.matches.length; i++) {
+        emptyGuesses.push('');
+        var input = document.getElementById('guess-' + i);
+        if (input) input.value = '';
+      }
+      google.script.run
+        .withSuccessHandler(function() {
+          document.getElementById('save-msg').textContent = 'הניחושים אופסו!';
+          document.getElementById('save-msg').style.display = 'block';
+          setTimeout(function() {
+            document.getElementById('save-msg').style.display = 'none';
+            document.getElementById('save-msg').textContent = 'הניחושים נשמרו בהצלחה!';
+          }, 3000);
+        })
+        .saveGuesses(currentPlayerIndex, emptyGuesses);
+    }
+
+    function buildLeaderboard(data) {
+      var combined = [];
+      for (var i = 0; i < data.playerNames.length; i++) {
+        combined.push({ name: data.playerNames[i], score: data.scores[i] });
+      }
+      combined.sort(function(a, b) { return b.score - a.score; });
+
+      var html = '<table><thead><tr><th>מיקום</th><th style="text-align:right">מתמודד</th><th>ניקוד</th></tr></thead><tbody>';
+      for (var j = 0; j < combined.length; j++) {
+        var rank = j + 1;
+        var color = rank === 1 ? '#BA7517' : rank === 2 ? '#888' : '#333';
+        html += '<tr><td style="font-weight:500;color:' + color + '">' + rank + '</td>';
+        html += '<td style="text-align:right;font-weight:500">' + combined[j].name + '</td>';
+        html += '<td><span style="background:#f0f0f0;border-radius:4px;padding:2px 8px;">' + combined[j].score + '</span></td></tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById('leaderboard-table').innerHTML = html;
+    }
+
+    function buildLeagueTable(data) {
+      if (!data.leagueTable || data.leagueTable.length === 0) {
+        document.getElementById('league-table').textContent = 'אין נתונים';
+        return;
+      }
+      var html = '<table><thead><tr><th>#</th><th style="text-align:right">קבוצה</th><th>מ</th><th>נ</th><th>ת</th><th>ה</th><th>שערים</th><th>נק</th></tr></thead><tbody>';
+      data.leagueTable.forEach(function(row) {
+        var logo = data.logos && data.logos[row.team] ? '<img src="' + data.logos[row.team] + '" style="height:18px;vertical-align:middle;margin-left:4px;border-radius:50%;">' : '';
+        html += '<tr>';
+        html += '<td style="font-weight:500">' + row.position + '</td>';
+        html += '<td style="text-align:right;font-size:12px;">' + logo + row.team + '</td>';
+        html += '<td>' + row.played + '</td>';
+        html += '<td>' + row.wins + '</td>';
+        html += '<td>' + row.draws + '</td>';
+        html += '<td>' + row.losses + '</td>';
+        html += '<td>' + row.goals + '</td>';
+        html += '<td style="font-weight:500">' + row.points + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('league-table').innerHTML = html;
+    }
+
+    function buildTopScorers(data) {
+      if (!data.topScorers || data.topScorers.length === 0) {
+        document.getElementById('top-scorers-table').textContent = 'אין נתונים';
+        return;
+      }
+      var html = '<table><thead><tr><th>#</th><th style="text-align:right">שחקן</th><th>⚽</th></tr></thead><tbody>';
+      data.topScorers.forEach(function(row, i) {
+        var color = i === 0 ? '#BA7517' : i === 1 ? '#888' : '#333';
+        html += '<tr><td style="font-weight:500;color:' + color + '">' + (i + 1) + '</td>';
+        html += '<td style="text-align:right">' + row.name + '</td>';
+        html += '<td style="font-weight:500">' + row.goals + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('top-scorers-table').innerHTML = html;
+    }
+
+    function buildTopAssists(data) {
+      if (!data.topAssists || data.topAssists.length === 0) {
+        document.getElementById('top-assists-table').textContent = 'אין נתונים';
+        return;
+      }
+      var html = '<table><thead><tr><th>#</th><th style="text-align:right">שחקן</th><th>👨‍🍳</th></tr></thead><tbody>';
+      data.topAssists.forEach(function(row, i) {
+        var color = i === 0 ? '#BA7517' : i === 1 ? '#888' : '#333';
+        html += '<tr><td style="font-weight:500;color:' + color + '">' + (i + 1) + '</td>';
+        html += '<td style="text-align:right">' + row.name + '</td>';
+        html += '<td style="font-weight:500">' + row.assists + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('top-assists-table').innerHTML = html;
+    }
+
+    function buildTopGoalsAssists(data) {
+      if (!data.topGoalsAssists || data.topGoalsAssists.length === 0) {
+        document.getElementById('top-goals-assists-table').textContent = 'אין נתונים';
+        return;
+      }
+      var html = '<table><thead><tr><th>#</th><th style="text-align:right">שחקן</th><th>🏆</th></tr></thead><tbody>';
+      data.topGoalsAssists.forEach(function(row, i) {
+        var color = i === 0 ? '#BA7517' : i === 1 ? '#888' : '#333';
+        html += '<tr><td style="font-weight:500;color:' + color + '">' + (i + 1) + '</td>';
+        html += '<td style="text-align:right">' + row.name + '</td>';
+        html += '<td style="font-weight:500">' + row.total + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('top-goals-assists-table').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
